@@ -37,7 +37,11 @@ class Cart {
     }
 
     this.saveCart();
-    this.showNotification(`${product.nombre} agregado al carrito`);
+    const message =
+      quantity > 1
+        ? `${quantity}x ${product.nombre} agregados al carrito`
+        : `${product.nombre} agregado al carrito`;
+    this.showNotification(message);
   }
 
   // Actualizar cantidad de un producto

@@ -47,7 +47,11 @@ class Cart {
     }
 
     this.saveCart();
-    this.showNotification(`${product.nombre} agregado al carrito`);
+    const message =
+      quantity > 1
+        ? `${quantity}x ${product.nombre} agregados al carrito`
+        : `${product.nombre} agregado al carrito`;
+    this.showNotification(message);
   }
 
   updateQuantity(productId, quantity) {
@@ -223,10 +227,66 @@ let searchTerm = "";
 
 // Inicializar
 document.addEventListener("DOMContentLoaded", () => {
+  initCarousel();
   loadCategories();
   loadProducts();
   setupEventListeners();
 });
+
+// Inicializar carrusel
+function initCarousel() {
+  let currentSlide = 0;
+  const slides = document.querySelectorAll(".carousel-slide");
+  const dotsContainer = document.getElementById("carousel-dots");
+
+  if (!slides.length || !dotsContainer) return;
+
+  // Crear dots
+  slides.forEach((_, index) => {
+    const dot = document.createElement("div");
+    dot.className = `carousel-dot ${index === 0 ? "active" : ""}`;
+    dot.addEventListener("click", () => goToSlide(index));
+    dotsContainer.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll(".carousel-dot");
+
+  function goToSlide(n) {
+    slides[currentSlide].classList.remove("active");
+    dots[currentSlide].classList.remove("active");
+
+    currentSlide = (n + slides.length) % slides.length;
+
+    slides[currentSlide].classList.add("active");
+    dots[currentSlide].classList.add("active");
+  }
+
+  function nextSlide() {
+    goToSlide(currentSlide + 1);
+  }
+
+  function prevSlide() {
+    goToSlide(currentSlide - 1);
+  }
+
+  // Event listeners para botones
+  const prevBtn = document.getElementById("carousel-prev");
+  const nextBtn = document.getElementById("carousel-next");
+
+  if (prevBtn) prevBtn.addEventListener("click", prevSlide);
+  if (nextBtn) nextBtn.addEventListener("click", nextSlide);
+
+  // Auto-advance cada 5 segundos
+  setInterval(nextSlide, 5000);
+}
+
+// Scroll a productos
+function scrollToProducts() {
+  const products = document.getElementById("products");
+  if (products) {
+    products.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
 
 // Cargar categorías
 async function loadCategories() {
@@ -243,12 +303,16 @@ async function loadCategories() {
     console.log("Categorías cargadas:", normalizedCategories);
 
     categoriesContainer.innerHTML = `
-            <button class="category-btn active" data-category="all">Todas</button>
+            <button class="category-btn active" data-category="all">
+                <span class="category-icon">📦</span>
+                <span>Todas</span>
+            </button>
             ${normalizedCategories
               .map(
                 (cat) => `
                 <button class="category-btn" data-category="${cat.id}">
-                    ${cat.icono ? cat.icono + " " : ""}${cat.nombre}
+                    <span class="category-icon">${cat.icono || "📦"}</span>
+                    <span>${cat.nombre}</span>
                 </button>
             `
               )
@@ -260,8 +324,8 @@ async function loadCategories() {
         document
           .querySelectorAll(".category-btn")
           .forEach((b) => b.classList.remove("active"));
-        e.target.classList.add("active");
-        currentCategory = e.target.dataset.category;
+        e.currentTarget.classList.add("active");
+        currentCategory = e.currentTarget.dataset.category;
         filterProducts();
       });
     });
@@ -338,6 +402,15 @@ function filterProducts() {
   filtered = filtered.filter((p) => p.activo === true);
 
   console.log("Productos filtrados:", filtered.length);
+
+  // Actualizar contador
+  const productsCount = document.getElementById("products-count");
+  if (productsCount) {
+    productsCount.textContent = `${filtered.length} producto${
+      filtered.length !== 1 ? "s" : ""
+    }`;
+  }
+
   renderProducts(filtered);
 }
 
@@ -392,9 +465,25 @@ function renderProducts(products) {
                         ${
                           !outOfStock
                             ? `
-                            <button class="btn btn-primary" onclick="addToCart('${product.id}')">
-                                Agregar
-                            </button>
+                            <div class="product-actions" id="actions-${product.id}">
+                                <button class="btn btn-primary btn-add" onclick="showQuantitySelector('${product.id}')">
+                                    Agregar
+                                </button>
+                                <div class="quantity-selector" style="display: none;">
+                                    <button class="btn-qty" onclick="decreaseQuantity('${product.id}')">-</button>
+                                    <input type="number" 
+                                           id="qty-${product.id}" 
+                                           value="1" 
+                                           min="1" 
+                                           max="${product.stock}"
+                                           class="qty-input"
+                                           onchange="validateQuantity('${product.id}', ${product.stock})">
+                                    <button class="btn-qty" onclick="increaseQuantity('${product.id}', ${product.stock})">+</button>
+                                </div>
+                                <button class="btn btn-primary btn-confirm" style="display: none;" onclick="confirmAddToCart('${product.id}')">
+                                    ✓ Añadir
+                                </button>
+                            </div>
                         `
                             : ""
                         }
@@ -413,13 +502,94 @@ function renderProducts(products) {
     .join("");
 }
 
-// Agregar al carrito
+// Mostrar selector de cantidad
+function showQuantitySelector(productId) {
+  const actionsContainer = document.getElementById(`actions-${productId}`);
+  const btnAdd = actionsContainer.querySelector(".btn-add");
+  const quantitySelector = actionsContainer.querySelector(".quantity-selector");
+  const btnConfirm = actionsContainer.querySelector(".btn-confirm");
+
+  btnAdd.style.display = "none";
+  quantitySelector.style.display = "flex";
+  btnConfirm.style.display = "block";
+
+  // Focus en el input
+  const input = document.getElementById(`qty-${productId}`);
+  input.select();
+}
+
+// Aumentar cantidad
+function increaseQuantity(productId, maxStock) {
+  const input = document.getElementById(`qty-${productId}`);
+  let value = parseInt(input.value) || 1;
+  if (value < maxStock) {
+    input.value = value + 1;
+  }
+}
+
+// Disminuir cantidad
+function decreaseQuantity(productId) {
+  const input = document.getElementById(`qty-${productId}`);
+  let value = parseInt(input.value) || 1;
+  if (value > 1) {
+    input.value = value - 1;
+  }
+}
+
+// Validar cantidad
+function validateQuantity(productId, maxStock) {
+  const input = document.getElementById(`qty-${productId}`);
+  let value = parseInt(input.value) || 1;
+
+  if (value < 1) {
+    input.value = 1;
+  } else if (value > maxStock) {
+    input.value = maxStock;
+    cart.showNotification(`Solo hay ${maxStock} unidades disponibles`);
+  }
+}
+
+// Confirmar agregar al carrito
+function confirmAddToCart(productId) {
+  const input = document.getElementById(`qty-${productId}`);
+  const quantity = parseInt(input.value) || 1;
+  const product = allProducts.find((p) => p.id === productId);
+
+  if (product) {
+    cart.addItem(product, quantity);
+
+    // Resetear la interfaz
+    const actionsContainer = document.getElementById(`actions-${productId}`);
+    const btnAdd = actionsContainer.querySelector(".btn-add");
+    const quantitySelector =
+      actionsContainer.querySelector(".quantity-selector");
+    const btnConfirm = actionsContainer.querySelector(".btn-confirm");
+
+    btnAdd.style.display = "block";
+    quantitySelector.style.display = "none";
+    btnConfirm.style.display = "none";
+    input.value = 1;
+  }
+}
+
+// Agregar al carrito (mantener compatibilidad)
 function addToCart(productId) {
   const product = allProducts.find((p) => p.id === productId);
   if (product) {
     cart.addItem(product);
   }
 }
+
+// Hacer funciones accesibles globalmente
+window.showQuantitySelector = showQuantitySelector;
+window.increaseQuantity = increaseQuantity;
+window.decreaseQuantity = decreaseQuantity;
+window.validateQuantity = validateQuantity;
+window.confirmAddToCart = confirmAddToCart;
+window.addToCart = addToCart;
+window.scrollToProducts = scrollToProducts;
+window.cart = cart;
+window.pb = pb;
 
 // Configurar event listeners
 function setupEventListeners() {
