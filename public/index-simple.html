@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Supermercado - Simple</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <h1 class="logo">🛒 Mi Supermercado</h1>
+          <button class="cart-btn" id="cart-btn">
+            🛒
+            <span class="cart-count" id="cart-count">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="container">
+        <h2>Productos</h2>
+        <div class="products-grid" id="products">
+          <div class="loading">Cargando productos...</div>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.19.0/dist/pocketbase.umd.js"></script>
+    <script>
+      const PB_URL = "http://127.0.0.1:8090";
+      const CURRENCY = "$";
+      const pb = new PocketBase(PB_URL);
+
+      async function loadProducts() {
+        const container = document.getElementById("products");
+
+        try {
+          console.log("🔄 Iniciando carga de productos...");
+
+          // Cargar categorías
+          const categories = await pb.collection("categorias").getFullList();
+          console.log("✅ Categorías cargadas:", categories);
+
+          const categoriasMap = {};
+          categories.forEach((cat) => {
+            categoriasMap[cat.id] = cat.Nombre || cat.nombre;
+          });
+
+          // Cargar productos
+          const products = await pb.collection("productos").getFullList();
+          console.log("✅ Productos cargados:", products);
+
+          if (products.length === 0) {
+            container.innerHTML = "<p>No hay productos disponibles</p>";
+            return;
+          }
+
+          // Renderizar
+          container.innerHTML = products
+            .map((p) => {
+              const nombre = p.Nombre || p.nombre;
+              const precio = p.Precio || p.precio;
+              const stock = p.Stock || p.stock;
+              const descripcion = p.Descripcion || p.descripcion;
+              const categoriaId = p.Categoria || p.categoria;
+              const categoriaNombre =
+                categoriasMap[categoriaId] || "Sin categoría";
+
+              const imageUrl = p.imagen
+                ? `${PB_URL}/api/files/${p.collectionId}/${p.id}/${p.imagen}`
+                : "https://via.placeholder.com/300x200?text=Sin+Imagen";
+
+              return `
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img src="${imageUrl}" alt="${nombre}" 
+                                     onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+                            </div>
+                            <div class="product-info">
+                                <span class="product-category">${categoriaNombre}</span>
+                                <h3 class="product-name">${nombre}</h3>
+                                ${
+                                  descripcion
+                                    ? `<p class="product-description">${descripcion}</p>`
+                                    : ""
+                                }
+                                <div class="product-footer">
+                                    <span class="product-price">${CURRENCY}${precio.toFixed(
+                2
+              )}</span>
+                                    <button class="btn btn-primary" onclick="alert('Producto: ${nombre}')">
+                                        Agregar
+                                    </button>
+                                </div>
+                                <p style="font-size: 0.9rem; color: #666;">Stock: ${stock}</p>
+                            </div>
+                        </div>
+                    `;
+            })
+            .join("");
+
+          console.log("✅ Productos renderizados en el DOM");
+        } catch (error) {
+          console.error("❌ Error:", error);
+          container.innerHTML = `
+                    <div style="padding: 20px; background: #ffebee; border-radius: 8px; color: #c62828;">
+                        <h3>Error al cargar productos</h3>
+                        <p>${error.message}</p>
+                        <p>Asegúrate de que PocketBase esté corriendo en http://127.0.0.1:8090</p>
+                    </div>
+                `;
+        }
+      }
+
+      // Cargar al inicio
+      document.addEventListener("DOMContentLoaded", loadProducts);
+    </script>
+  </body>
+</html>

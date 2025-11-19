@@ -1,0 +1,187 @@
+[
+  {
+    "id": "productos_collection",
+    "name": "productos",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "nombre_field",
+        "name": "nombre",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 200
+        }
+      },
+      {
+        "id": "descripcion_field",
+        "name": "descripcion",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 1000
+        }
+      },
+      {
+        "id": "precio_field",
+        "name": "precio",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0
+        }
+      },
+      {
+        "id": "categoria_field",
+        "name": "categoria",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 100
+        }
+      },
+      {
+        "id": "imagen_field",
+        "name": "imagen",
+        "type": "file",
+        "required": false,
+        "options": {
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"]
+        }
+      },
+      {
+        "id": "stock_field",
+        "name": "stock",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0
+        }
+      },
+      {
+        "id": "activo_field",
+        "name": "activo",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "options": {}
+  },
+  {
+    "id": "categorias_collection",
+    "name": "categorias",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "nombre_field",
+        "name": "nombre",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 100
+        }
+      },
+      {
+        "id": "icono_field",
+        "name": "icono",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 50
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "options": {}
+  },
+  {
+    "id": "pedidos_collection",
+    "name": "pedidos",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "cliente_nombre_field",
+        "name": "cliente_nombre",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 200
+        }
+      },
+      {
+        "id": "cliente_telefono_field",
+        "name": "cliente_telefono",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 50
+        }
+      },
+      {
+        "id": "items_field",
+        "name": "items",
+        "type": "json",
+        "required": true
+      },
+      {
+        "id": "total_field",
+        "name": "total",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0
+        }
+      },
+      {
+        "id": "estado_field",
+        "name": "estado",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["pendiente", "confirmado", "entregado", "cancelado"]
+        }
+      },
+      {
+        "id": "notas_field",
+        "name": "notas",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 1000
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "options": {}
+  }
+]

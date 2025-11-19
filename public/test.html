@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test - Conexión PocketBase</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      .test-box {
+        border: 2px solid #ddd;
+        padding: 20px;
+        margin: 10px 0;
+        border-radius: 8px;
+      }
+      .success {
+        border-color: #4caf50;
+        background: #e8f5e9;
+      }
+      .error {
+        border-color: #f44336;
+        background: #ffebee;
+      }
+      .info {
+        border-color: #2196f3;
+        background: #e3f2fd;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background: #388e3c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Test de Conexión - PocketBase</h1>
+
+    <div class="test-box info">
+      <h3>Estado de PocketBase</h3>
+      <p id="pb-status">Verificando...</p>
+    </div>
+
+    <div class="test-box info">
+      <h3>Categorías en la Base de Datos</h3>
+      <p id="categories-count">Cargando...</p>
+      <pre id="categories-data"></pre>
+    </div>
+
+    <div class="test-box info">
+      <h3>Productos en la Base de Datos</h3>
+      <p id="products-count">Cargando...</p>
+      <pre id="products-data"></pre>
+    </div>
+
+    <div class="test-box info">
+      <h3>Estructura de Campos</h3>
+      <pre id="field-structure"></pre>
+    </div>
+
+    <button onclick="window.location.href='index.html'">Ir a la Tienda</button>
+    <button onclick="location.reload()">Recargar Test</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.19.0/dist/pocketbase.umd.js"></script>
+    <script type="module">
+      const pb = new PocketBase("http://127.0.0.1:8090");
+
+      async function testConnection() {
+        // Test 1: Verificar que PocketBase está corriendo
+        try {
+          const health = await fetch("http://127.0.0.1:8090/api/health");
+          if (health.ok) {
+            document.getElementById("pb-status").innerHTML =
+              "✅ PocketBase está corriendo correctamente";
+            document.querySelector("#pb-status").parentElement.className =
+              "test-box success";
+          }
+        } catch (error) {
+          document.getElementById("pb-status").innerHTML =
+            "❌ PocketBase NO está corriendo. Ejecuta: <code>./pocketbase serve</code>";
+          document.querySelector("#pb-status").parentElement.className =
+            "test-box error";
+          return;
+        }
+
+        // Test 2: Cargar categorías
+        try {
+          const categories = await pb.collection("categorias").getFullList();
+          document.getElementById(
+            "categories-count"
+          ).innerHTML = `✅ ${categories.length} categorías encontradas`;
+          document.querySelector("#categories-count").parentElement.className =
+            "test-box success";
+          document.getElementById("categories-data").textContent =
+            JSON.stringify(categories, null, 2);
+
+          // Mostrar estructura de campos
+          if (categories.length > 0) {
+            const fields = Object.keys(categories[0]);
+            document.getElementById("field-structure").textContent =
+              `Campos de categorías: ${fields.join(", ")}\n\n` +
+              `Ejemplo:\n${JSON.stringify(categories[0], null, 2)}`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "categories-count"
+          ).innerHTML = `❌ Error: ${error.message}`;
+          document.querySelector("#categories-count").parentElement.className =
+            "test-box error";
+          console.error("Error cargando categorías:", error);
+        }
+
+        // Test 3: Cargar productos
+        try {
+          const products = await pb.collection("productos").getFullList();
+          document.getElementById(
+            "products-count"
+          ).innerHTML = `✅ ${products.length} productos encontrados`;
+          document.querySelector("#products-count").parentElement.className =
+            "test-box success";
+          document.getElementById("products-data").textContent = JSON.stringify(
+            products,
+            null,
+            2
+          );
+
+          // Verificar estructura de campos de productos
+          if (products.length > 0) {
+            const fields = Object.keys(products[0]);
+            const currentStructure =
+              document.getElementById("field-structure").textContent;
+            document.getElementById("field-structure").textContent =
+              currentStructure +
+              `\n\nCampos de productos: ${fields.join(", ")}\n\n` +
+              `Ejemplo:\n${JSON.stringify(products[0], null, 2)}`;
+
+            // Verificar si los campos son correctos
+            const expectedFields = [
+              "nombre",
+              "precio",
+              "stock",
+              "categoria",
+              "activo",
+            ];
+            const capitalizedFields = [
+              "Nombre",
+              "Precio",
+              "Stock",
+              "Categoria",
+              "Activo",
+            ];
+
+            const hasLowerCase = expectedFields.some((f) => fields.includes(f));
+            const hasCapitalized = capitalizedFields.some((f) =>
+              fields.includes(f)
+            );
+
+            if (hasCapitalized && !hasLowerCase) {
+              const warning = document.createElement("div");
+              warning.className = "test-box error";
+              warning.innerHTML = `
+                            <h3>⚠️ ADVERTENCIA: Campos con mayúsculas detectados</h3>
+                            <p>Tus campos están en mayúsculas (${capitalizedFields
+                              .filter((f) => fields.includes(f))
+                              .join(", ")})</p>
+                            <p>El código ha sido actualizado para funcionar con esta estructura.</p>
+                            <p><strong>Recomendación:</strong> Los nombres de campos deberían estar en minúsculas según las convenciones de PocketBase.</p>
+                        `;
+              document.body.insertBefore(
+                warning,
+                document.querySelector("button")
+              );
+            }
+          }
+        } catch (error) {
+          document.getElementById(
+            "products-count"
+          ).innerHTML = `❌ Error: ${error.message}`;
+          document.querySelector("#products-count").parentElement.className =
+            "test-box error";
+          console.error("Error cargando productos:", error);
+        }
+      }
+
+      testConnection();
+    </script>
+  </body>
+</html>

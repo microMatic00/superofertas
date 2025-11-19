@@ -1,0 +1,24 @@
+# Datos de PocketBase (generados automáticamente)
+pb_data/
+
+# Ejecutable de PocketBase (descargar manualmente)
+backend/pocketbase
+backend/pocketbase.exe
+
+# Node modules (si decides usar Node.js más adelante)
+node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+
+# Temporal
+tmp/
+temp/

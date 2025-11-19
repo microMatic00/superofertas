@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug - Productos</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .product {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 10px;
+        border-radius: 8px;
+        display: inline-block;
+        width: 250px;
+      }
+      .product img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      .price {
+        color: #4caf50;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        background: #e3f2fd;
+      }
+      .error {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🛒 Debug - Productos</h1>
+
+    <div id="status" class="status">Cargando...</div>
+
+    <h2>Productos:</h2>
+    <div id="products"></div>
+
+    <h2>Datos Raw:</h2>
+    <pre id="raw-data"></pre>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.19.0/dist/pocketbase.umd.js"></script>
+    <script>
+      const PB_URL = "http://127.0.0.1:8090";
+      const pb = new PocketBase(PB_URL);
+
+      async function loadEverything() {
+        const statusEl = document.getElementById("status");
+        const productsEl = document.getElementById("products");
+        const rawDataEl = document.getElementById("raw-data");
+
+        try {
+          // 1. Cargar categorías
+          statusEl.innerHTML = "⏳ Cargando categorías...";
+          const categories = await pb.collection("categorias").getFullList();
+          console.log("Categorías:", categories);
+
+          // Crear mapa de categorías
+          const categoriasMap = {};
+          categories.forEach((cat) => {
+            categoriasMap[cat.id] = cat.Nombre || cat.nombre;
+          });
+
+          // 2. Cargar productos
+          statusEl.innerHTML = "⏳ Cargando productos...";
+          const products = await pb.collection("productos").getFullList();
+          console.log("Productos:", products);
+
+          rawDataEl.textContent = JSON.stringify(
+            {
+              categorias: categories,
+              productos: products,
+              categoriasMap: categoriasMap,
+            },
+            null,
+            2
+          );
+
+          if (products.length === 0) {
+            productsEl.innerHTML =
+              "<p>No hay productos en la base de datos</p>";
+            statusEl.innerHTML = "⚠️ No se encontraron productos";
+            statusEl.className = "status error";
+            return;
+          }
+
+          // 3. Renderizar productos
+          productsEl.innerHTML = products
+            .map((p) => {
+              const nombre = p.Nombre || p.nombre || "Sin nombre";
+              const precio = p.Precio || p.precio || 0;
+              const stock = p.Stock || p.stock || 0;
+              const descripcion = p.Descripcion || p.descripcion || "";
+              const activo =
+                p.Activo !== undefined
+                  ? p.Activo
+                  : p.activo !== undefined
+                  ? p.activo
+                  : true;
+              const categoriaId = p.Categoria || p.categoria;
+              const categoriaNombre =
+                categoriasMap[categoriaId] || categoriaId || "Sin categoría";
+
+              const imageUrl = p.imagen
+                ? `${PB_URL}/api/files/${p.collectionId}/${p.id}/${p.imagen}`
+                : "https://via.placeholder.com/300x200?text=Sin+Imagen";
+
+              return `
+                        <div class="product">
+                            <img src="${imageUrl}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Error+Imagen'">
+                            <h3>${nombre}</h3>
+                            <p><small>${categoriaNombre}</small></p>
+                            <p>${descripcion}</p>
+                            <div class="price">$${precio.toFixed(2)}</div>
+                            <p>Stock: ${stock}</p>
+                            <p>Estado: ${
+                              activo ? "✅ Activo" : "❌ Inactivo"
+                            }</p>
+                        </div>
+                    `;
+            })
+            .join("");
+
+          statusEl.innerHTML = `✅ ${products.length} producto(s) cargado(s) correctamente`;
+          statusEl.className = "status success";
+        } catch (error) {
+          console.error("Error:", error);
+          statusEl.innerHTML = `❌ Error: ${error.message}`;
+          statusEl.className = "status error";
+          rawDataEl.textContent = `ERROR:\n${error.message}\n\n${error.stack}`;
+        }
+      }
+
+      loadEverything();
+    </script>
+  </body>
+</html>

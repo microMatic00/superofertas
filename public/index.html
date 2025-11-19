@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Supermercado - Compra Online</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <h1 class="logo">🛒 Mi Supermercado</h1>
+          <div class="header-actions">
+            <div class="search-box">
+              <input
+                type="text"
+                id="search"
+                placeholder="Buscar productos..."
+                class="search-input"
+              />
+              <svg
+                class="search-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </div>
+            <button class="cart-btn" id="cart-btn">
+              🛒
+              <span class="cart-count" id="cart-count">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Categorías -->
+    <section class="categories-section">
+      <div class="container">
+        <div class="categories" id="categories">
+          <button class="category-btn active" data-category="all">Todas</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Productos -->
+    <main class="main">
+      <div class="container">
+        <div class="products-grid" id="products">
+          <div class="loading">Cargando productos...</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Carrito Sidebar -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <aside class="cart-sidebar" id="cart-sidebar">
+      <div class="cart-header">
+        <h2>Tu Carrito</h2>
+        <button class="close-btn" id="close-cart">×</button>
+      </div>
+
+      <div class="empty-cart" id="empty-cart">
+        <p>🛒 Tu carrito está vacío</p>
+      </div>
+
+      <div class="cart-content" id="cart-content" style="display: none">
+        <div class="cart-items" id="cart-items"></div>
+
+        <div class="cart-footer">
+          <div class="cart-total-row">
+            <span>Total:</span>
+            <span class="cart-total" id="cart-total">$0.00</span>
+          </div>
+          <button class="btn btn-primary btn-block" id="checkout-btn">
+            Enviar Pedido por WhatsApp
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Modal de Checkout -->
+    <div class="modal" id="checkout-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Finalizar Pedido</h2>
+          <button class="close-btn" id="close-modal">×</button>
+        </div>
+        <form id="checkout-form">
+          <div class="form-group">
+            <label for="customer-name">Nombre completo *</label>
+            <input
+              type="text"
+              id="customer-name"
+              required
+              placeholder="Tu nombre"
+            />
+          </div>
+          <div class="form-group">
+            <label for="customer-phone">Teléfono *</label>
+            <input
+              type="tel"
+              id="customer-phone"
+              required
+              placeholder="3001234567"
+            />
+          </div>
+          <div class="form-group">
+            <label for="order-notes">Notas del pedido (opcional)</label>
+            <textarea
+              id="order-notes"
+              rows="3"
+              placeholder="Dirección de entrega, instrucciones especiales, etc."
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary btn-block">
+              📱 Enviar a WhatsApp
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2025 Mi Supermercado. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.19.0/dist/pocketbase.umd.js"></script>
+    <script src="js/app-bundle.js"></script>
+  </body>
+</html>
